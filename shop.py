@@ -1,36 +1,32 @@
-
 from flask import Flask, render_template_string, request, session, redirect, url_for
 import random
 import datetime
 import os
 
 app = Flask(__name__)
-app.secret_key = 'flipkart_final_public_release_v9'
+app.secret_key = 'flipkart_final_public_release_v10'
 
 # ==========================================
-# 1. SETTINGS
+# 1. SETTINGS (UPI ID)
 # ==========================================
 MY_UPI_ID = "9653314458@naviaxis"
 MY_NAME = "Apni Dukaan"
 
 # ==========================================
-# 2. INVENTORY LOGIC (MASSIVE STOCK)
+# 2. INVENTORY LOGIC
 # ==========================================
 products = []
 next_id = 1
 
-COLORS = ['Red', 'Blue', 'Black', 'Gold', 'Silver', 'Green', 'White', 'Pink', 'Yellow']
+COLORS = ['Red', 'Blue', 'Black', 'Gold', 'Silver', 'Green', 'Yellow', 'Multicolor']
 
 def add_product(name, price, category, keyword, count=1):
     global next_id
     for i in range(count):
         color = COLORS[i % len(COLORS)]
+        original_price = price * 100  # Fake MRP to show 99% OFF
         
-        # 99% Discount Logic (MRP Fake Badhana)
-        # Agar price 1 hai, to MRP 100 dikhana padega tabhi 99% off banega
-        original_price = price * 100 
-        
-        # 3 Images for Slider
+        # AI Images
         images = [
             f"https://image.pollinations.ai/prompt/{keyword} {color} product view?width=400&height=400&nologo=true&seed={next_id}1",
             f"https://image.pollinations.ai/prompt/{keyword} {color} lifestyle view?width=400&height=400&nologo=true&seed={next_id}2",
@@ -42,46 +38,38 @@ def add_product(name, price, category, keyword, count=1):
             'name': f"{name} {color} Ed.",
             'price': price,
             'original_price': original_price,
-            'discount': 99,  # Fixed 99% OFF
+            'discount': 99,
             'category': category,
             'images': images,
             'main_image': images[0],
             'rating': round(random.uniform(3.5, 5.0), 1),
             'rating_count': f"{random.randint(1, 50)}k",
-            'specs': {"Color": color, "Warranty": "1 Year", "Condition": "New"},
+            'specs': {"Color": color, "Warranty": "6 Months", "Material": "Premium"},
         })
         next_id += 1
 
-# --- 1. PREMIUM PHONES (Fixed ₹1500) ---
+# --- LOADING PRODUCTS (Yahan Naye Items Add Kiye Hain) ---
+
+# 1. CRICKET BATS (Total 20 Logic)
+# 5 Saste Bat (Rs 99)
+add_product("Plastic Cricket Bat", 99, "Sports", "plastic cricket bat toy", 5)
+# 15 Mehnge Bat (Rs 200 se upar)
+add_product("Heavy Duty Plastic Bat", 249, "Sports", "hard plastic cricket bat", 15)
+
+# 2. BADMINTON (Logic)
+# 5 Saste Badminton (Rs 70)
+add_product("Kids Badminton Set", 70, "Sports", "badminton racket pair", 5)
+# 5 Mehnge Bags (Rs 499)
+add_product("Pro Badminton Kit Bag", 499, "Sports", "badminton sports bag", 5)
+
+# 3. EXISTING ITEMS
 add_product("iPhone 15 Pro Max", 1500, "Mobile", "iphone 15 pro max titanium", 5)
 add_product("Samsung S24 Ultra", 1500, "Mobile", "samsung s24 ultra", 5)
-
-# --- 2. BUDGET PHONES (Mix ₹49, ₹99, ₹999) ---
 add_product("Vivo T2x 5G", 999, "Mobile", "vivo smartphone", 4)
 add_product("Oppo Reno 10", 499, "Mobile", "oppo phone", 4)
-add_product("Realme Narzo", 99, "Mobile", "realme phone", 4)
-add_product("Jio Keypad Phone", 49, "Mobile", "feature phone keypad", 3)
-
-# --- 3. ₹1 LOOT STORE (Toys & Gadgets) ---
 add_product("RC Toy Car", 1, "Toys", "remote control toy car", 5)
-add_product("LED Keychains", 1, "Toys", "fancy keychain", 5)
-add_product("USB Light", 1, "Gadget", "usb led light flexible", 5)
-add_product("Mobile Stand", 1, "Gadget", "mobile phone holder stand", 5)
-
-# --- 4. FASHION (Shoes ₹50, Watch ₹30-49) ---
 add_product("Running Shoes", 50, "Fashion", "nike running shoes", 6)
 add_product("Digital Watch", 30, "Fashion", "digital led watch band", 5)
-add_product("Analog Watch", 49, "Fashion", "luxury wrist watch men", 5)
-add_product("Cotton Socks (Pack of 3)", 10, "Fashion", "socks men", 5)
-add_product("Men T-Shirt", 49, "Fashion", "men t-shirt folded", 5)
-
-# --- 5. HOME & BEAUTY (Sab Wapas Aa Gaya) ---
-add_product("Matte Lipstick", 25, "Beauty", "red lipstick tube", 5)
-add_product("Eyeliner Kit", 15, "Beauty", "makeup eyeliner", 4)
-add_product("Kitchen Knife Set", 20, "Home", "kitchen knife steel", 5)
-add_product("Water Bottle", 19, "Home", "steel water bottle", 5)
-add_product("Lunch Box", 29, "Home", "tiffin box", 4)
-
 
 def get_product(pid):
     for p in products:
@@ -93,7 +81,7 @@ def get_similar_products(current_id):
     return random.sample(sim, min(len(sim), 6))
 
 # ==========================================
-# 3. HTML TEMPLATE
+# 3. HTML TEMPLATE (Design wahi purana)
 # ==========================================
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -108,30 +96,17 @@ HTML_TEMPLATE = """
         :root { --fk-blue: #2874f0; --bg-grey: #f1f3f6; }
         body { background-color: var(--bg-grey); padding-top: 60px; padding-bottom: 70px; font-family: sans-serif; }
         a { text-decoration: none; color: inherit; }
-        
         .navbar { background-color: var(--fk-blue); height: 60px; }
-        
-        /* 2-Column Grid for everything */
         .product-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; padding: 5px; }
-        
         .card { background: white; padding: 10px; position: relative; border: 1px solid #eee; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
         .tag-badge { position: absolute; top: 5px; left: 5px; background: #388e3c; color: white; padding: 2px 6px; font-size: 10px; border-radius: 2px; }
-        
-        /* IMAGE SLIDER */
         .slider-container { overflow-x: auto; display: flex; scroll-snap-type: x mandatory; height: 300px; }
         .slider-img { min-width: 100%; height: 100%; object-fit: contain; scroll-snap-align: center; }
-        
-        /* TIMER */
         .timer-box { background: white; color: #333; padding: 2px 5px; border-radius: 3px; font-weight: bold; font-size: 12px; }
-        
-        /* FOOTER */
         .sticky-footer { position: fixed; bottom: 0; left: 0; width: 100%; display: flex; z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
         .btn-cart { flex: 1; background: white; border: none; padding: 15px; font-weight: bold; }
         .btn-buy { flex: 1; background: #ff9f00; border: none; padding: 15px; font-weight: bold; color: white; }
-        
         .user-dp { width: 30px; height: 30px; background: white; color: var(--fk-blue); border-radius: 50%; font-weight: bold; display: flex; align-items: center; justify-content: center; }
-        
-        /* SCROLLABLE ROW */
         .scroll-row { display: flex; overflow-x: auto; gap: 8px; padding: 5px; background: white; }
         .scroll-item { min-width: 130px; border: 1px solid #eee; padding: 5px; text-align: center; }
     </style>
@@ -165,16 +140,7 @@ HTML_TEMPLATE = """
         <div class="offcanvas-body p-0">
             <a href="/" class="d-block p-3 border-bottom"><i class="fas fa-home me-2"></i> Home</a>
             <a href="/my_orders" class="d-block p-3 border-bottom"><i class="fas fa-box me-2"></i> My Orders</a>
-            <a href="/cart" class="d-block p-3 border-bottom"><i class="fas fa-shopping-cart me-2"></i> My Cart</a>
-            <a href="/" class="d-block p-3 border-bottom"><i class="fas fa-mobile me-2"></i> Mobiles</a>
-            <a href="/" class="d-block p-3 border-bottom"><i class="fas fa-tshirt me-2"></i> Fashion</a>
-            <a href="/" class="d-block p-3 border-bottom"><i class="fas fa-plug me-2"></i> Electronics</a>
-            <a href="/" class="d-block p-3 border-bottom"><i class="fas fa-couch me-2"></i> Home</a>
-            {% if session.get('user') %}
-                <a href="/logout" class="d-block p-3 border-bottom text-danger">Logout</a>
-            {% else %}
-                <a href="/login" class="d-block p-3 border-bottom text-primary">Login</a>
-            {% endif %}
+            <a href="/logout" class="d-block p-3 border-bottom text-danger">Logout</a>
         </div>
     </div>
 
@@ -182,6 +148,13 @@ HTML_TEMPLATE = """
         {% if page == 'home' %}
             <div style="background: var(--fk-blue); padding: 0 10px 10px;">
                 <input type="text" class="form-control rounded-1 border-0" placeholder="Search for products...">
+            </div>
+            
+            <div class="d-flex gap-2 p-2 overflow-auto bg-white mb-2">
+                <a href="/?cat=all" class="btn btn-sm btn-outline-primary rounded-pill">All</a>
+                <a href="/?cat=Sports" class="btn btn-sm btn-outline-primary rounded-pill">Sports</a>
+                <a href="/?cat=Mobile" class="btn btn-sm btn-outline-primary rounded-pill">Mobiles</a>
+                <a href="/?cat=Fashion" class="btn btn-sm btn-outline-primary rounded-pill">Fashion</a>
             </div>
 
             <div style="background: linear-gradient(90deg, #ff0000, #ff5500); color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
@@ -192,12 +165,9 @@ HTML_TEMPLATE = """
             </div>
 
             <div class="bg-white p-2 mb-2">
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="fw-bold text-danger">₹1 Loot Store</span>
-                    <span class="badge bg-danger">Live Now</span>
-                </div>
+                <span class="fw-bold text-danger">₹99 Loot Store (Sports & More)</span>
                 <div class="scroll-row">
-                    {% for p in products if p.price == 1 %}
+                    {% for p in products if p.price <= 99 %}
                     <a href="/product/{{ p.id }}" class="scroll-item text-decoration-none text-dark">
                         <img src="{{ p.main_image }}" style="height:100px; width:100%; object-fit:contain;">
                         <div style="font-size:12px; margin-top:5px;" class="text-truncate">{{ p.name }}</div>
@@ -208,29 +178,17 @@ HTML_TEMPLATE = """
             </div>
 
             <div class="bg-white p-2 mb-2">
-                <h6 class="fw-bold">Crazy Mobile Deals</h6>
+                <h6 class="fw-bold">Trending Products</h6>
                 <div class="product-grid">
-                    {% for p in products if p.category == 'Mobile' %}
+                    {% for p in products if p.price > 99 %}
+                    {% if cat == 'all' or p.category == cat %}
                     <a href="/product/{{ p.id }}" class="card text-dark text-decoration-none">
                         <span class="tag-badge">99% Off</span>
                         <img src="{{ p.main_image }}" style="height:120px; object-fit:contain;">
                         <div class="mt-2" style="font-size:13px;">{{ p.name }}</div>
                         <div class="fw-bold">₹{{ p.price }} <span class="text-muted text-decoration-line-through small">₹{{ p.original_price }}</span></div>
                     </a>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <div class="bg-white p-2">
-                <h6 class="fw-bold">Fashion, Home & More</h6>
-                <div class="product-grid">
-                    {% for p in products if p.category != 'Mobile' and p.price > 1 %}
-                    <a href="/product/{{ p.id }}" class="card text-dark text-decoration-none">
-                        <span class="tag-badge">99% Off</span>
-                        <img src="{{ p.main_image }}" style="height:120px; object-fit:contain;">
-                        <div class="mt-2" style="font-size:13px;">{{ p.name }}</div>
-                        <div class="fw-bold">₹{{ p.price }} <span class="text-muted text-decoration-line-through small">₹{{ p.original_price }}</span></div>
-                    </a>
+                    {% endif %}
                     {% endfor %}
                 </div>
             </div>
@@ -244,43 +202,18 @@ HTML_TEMPLATE = """
                 </div>
                 <div class="text-center text-muted small mt-1">Swipe for more photos</div>
             </div>
-
             <div class="bg-white p-3">
                 <h5>{{ product.name }}</h5>
                 <div class="mb-2">
                     <span class="badge bg-success">{{ product.rating }} ★</span> 
                     <span class="text-muted small ms-2">{{ product.rating_count }} Ratings</span>
                 </div>
-                
                 <h3>₹{{ product.price }} 
                     <span class="text-decoration-line-through text-muted fs-6">₹{{ product.original_price }}</span> 
                     <span class="text-success fs-6">99% off</span>
                 </h3>
-
-                <div class="alert alert-warning p-2 mt-2 small">
-                    <i class="fas fa-fire"></i> Hurry, Only a few left at this price!
-                </div>
-
-                <div class="d-flex justify-content-around border rounded p-2 my-3 text-center small text-muted">
-                    <div><i class="fas fa-undo text-primary mb-1"></i><br>7 Day Return</div>
-                    <div><i class="fas fa-check-circle text-primary mb-1"></i><br>Genuine</div>
-                    <div><i class="fas fa-truck text-primary mb-1"></i><br>Free Delivery</div>
-                </div>
+                <div class="alert alert-warning p-2 mt-2 small"><i class="fas fa-fire"></i> Hurry, Only a few left!</div>
             </div>
-
-            <div class="bg-white p-3 mt-2">
-                <h6>Similar Products</h6>
-                <div class="scroll-row">
-                    {% for sim in similar %}
-                    <a href="/product/{{ sim.id }}" class="scroll-item text-decoration-none text-dark">
-                        <img src="{{ sim.main_image }}" style="height:80px; width:100%; object-fit:contain;">
-                        <div class="text-truncate small mt-1">{{ sim.name }}</div>
-                        <div class="fw-bold small">₹{{ sim.price }}</div>
-                    </a>
-                    {% endfor %}
-                </div>
-            </div>
-            
             <div style="height:60px;"></div>
             <div class="sticky-footer">
                 <form action="/add_to_cart/{{ product.id }}" method="post" style="flex:1;"><button class="btn-cart w-100">ADD TO CART</button></form>
@@ -329,35 +262,7 @@ HTML_TEMPLATE = """
                     <button class="btn btn-warning w-100">Login</button>
                 </form>
             </div>
-
-        {% elif page == 'address' %}
-            <div class="p-4 bg-white m-3 rounded">
-                <h4>Delivery Address</h4>
-                <form method="post">
-                    <input name="pincode" class="form-control mb-3" placeholder="Pincode" required>
-                    <textarea name="addr" class="form-control mb-3" placeholder="Full Address (House No, Colony)" required></textarea>
-                    <button class="btn btn-warning w-100">Save Address</button>
-                </form>
-            </div>
-
-        {% elif page == 'my_orders' %}
-            <div class="p-3">
-                <h5>My Orders</h5>
-                {% if orders %}
-                    {% for o in orders %}
-                    <div class="card mb-2">
-                        <div class="d-flex justify-content-between">
-                            <span class="fw-bold">{{ o.item }}</span>
-                            <span class="text-success fw-bold">₹{{ o.amount }}</span>
-                        </div>
-                        <small class="text-muted">Arriving by {{ o.date }}</small>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="text-center mt-5 text-muted">No orders yet.</div>
-                {% endif %}
-            </div>
-
+            
         {% elif page == 'cart' %}
             <div class="p-3">
                 <h5>My Cart</h5>
@@ -379,6 +284,24 @@ HTML_TEMPLATE = """
                     </div>
                 {% else %}
                     <div class="text-center mt-5 text-muted">Cart is Empty</div>
+                {% endif %}
+            </div>
+
+        {% elif page == 'my_orders' %}
+            <div class="p-3">
+                <h5>My Orders</h5>
+                {% if orders %}
+                    {% for o in orders %}
+                    <div class="card mb-2 p-2">
+                        <div class="d-flex justify-content-between">
+                            <span class="fw-bold">{{ o.item }}</span>
+                            <span class="text-success fw-bold">₹{{ o.amount }}</span>
+                        </div>
+                        <small class="text-muted">Arriving by {{ o.date }}</small>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center mt-5 text-muted">No orders yet.</div>
                 {% endif %}
             </div>
 
@@ -405,106 +328,81 @@ HTML_TEMPLATE = """
 """
 
 # ==========================================
-# 4. ROUTES
+# 4. APP ROUTES
 # ==========================================
+
 @app.route('/')
 def home():
-    return render_template_string(HTML_TEMPLATE, page='home', products=products, session=session)
+    cat = request.args.get('cat', 'all')
+    return render_template_string(HTML_TEMPLATE, page='home', products=products, cat=cat)
 
-@app.route('/product/<int:id>')
-def product_detail(id):
-    p = get_product(id)
-    sim = get_similar_products(id)
-    return render_template_string(HTML_TEMPLATE, page='detail', product=p, similar=sim, session=session)
+@app.route('/product/<int:pid>')
+def product_detail(pid):
+    product = get_product(pid)
+    if not product: return redirect('/')
+    similar = get_similar_products(pid)
+    return render_template_string(HTML_TEMPLATE, page='detail', product=product, similar=similar)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         session['user'] = {'name': request.form['name'], 'phone': request.form['phone']}
-        return redirect(session.get('next', '/'))
-    return render_template_string(HTML_TEMPLATE, page='login', session=session)
+        return redirect('/')
+    return render_template_string(HTML_TEMPLATE, page='login')
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect('/')
 
-@app.route('/add_to_cart/<int:id>', methods=['POST'])
-def add_to_cart(id):
-    if 'cart' not in session: session['cart'] = []
-    session['cart'].append(id)
-    return redirect(request.referrer)
-
-@app.route('/buy_now/<int:id>', methods=['POST'])
-def buy_now(id):
-    session['checkout_item'] = id
-    if not session.get('user'):
-        session['next'] = '/buy_now_process'
-        return redirect('/login')
-    return redirect('/address')
-
-@app.route('/buy_now_process')
-def buy_now_process(): return redirect('/address')
-
-@app.route('/address', methods=['GET', 'POST'])
-def address():
-    if request.method == 'POST': return redirect('/payment')
-    return render_template_string(HTML_TEMPLATE, page='address', session=session)
-
-@app.route('/payment')
-def payment():
-    total = 0
-    if 'checkout_item' in session:
-        p = get_product(session['checkout_item'])
-        if p: total = p['price']
-    elif 'cart' in session:
-        cart_ids = session.get('cart', [])
-        cart_items = [p for p in products if p['id'] in cart_ids]
-        total = sum(item['price'] for item in cart_items)
-        
-    return render_template_string(HTML_TEMPLATE, page='payment', total=total, upi_id=MY_UPI_ID, upi_name=MY_NAME, session=session)
-
-@app.route('/success', methods=['POST'])
-def success():
-    date = (datetime.datetime.now() + datetime.timedelta(days=5)).strftime("%d %b")
-    amount = 0
-    item_name = "Order"
-    
-    if 'checkout_item' in session:
-        p = get_product(session['checkout_item'])
-        if p:
-            amount = p['price']
-            item_name = p['name']
-        session.pop('checkout_item', None)
-    elif 'cart' in session:
-        cart_ids = session.get('cart', [])
-        cart_items = [p for p in products if p['id'] in cart_ids]
-        amount = sum(item['price'] for item in cart_items)
-        item_name = f"Cart Order ({len(cart_items)} items)"
-        session['cart'] = [] 
-        
-    if 'orders' not in session: session['orders'] = []
-    session['orders'].append({'item': item_name, 'amount': amount, 'date': date})
-    return render_template_string(HTML_TEMPLATE, page='success', date=date, session=session)
-
-@app.route('/my_orders')
-def my_orders():
-    if not session.get('user'): return redirect('/login')
-    return render_template_string(HTML_TEMPLATE, page='my_orders', orders=session.get('orders', []), session=session)
+@app.route('/add_to_cart/<int:pid>', methods=['POST'])
+def add_to_cart(pid):
+    cart = session.get('cart', [])
+    cart.append(pid)
+    session['cart'] = cart
+    return redirect('/cart')
 
 @app.route('/cart')
 def cart():
     cart_ids = session.get('cart', [])
-    cart_items = [p for p in products if p['id'] in cart_ids]
-    total = sum(item['price'] for item in cart_items)
-    return render_template_string(HTML_TEMPLATE, page='cart', cart_items=cart_items, total=total, session=session)
+    cart_items = [get_product(pid) for pid in cart_ids]
+    total = sum(item['price'] for item in cart_items if item)
+    return render_template_string(HTML_TEMPLATE, page='cart', cart_items=cart_items, total=total)
+
+@app.route('/buy_now/<int:pid>', methods=['POST'])
+def buy_now(pid):
+    session['cart'] = [pid]
+    return redirect('/checkout')
 
 @app.route('/checkout')
 def checkout():
-    if not session.get('user'):
-        session['next'] = '/address'
-        return redirect('/login')
-    return redirect('/address')
+    if not session.get('user'): return redirect('/login')
+    return redirect('/payment')
+
+@app.route('/payment')
+def payment():
+    cart_ids = session.get('cart', [])
+    if not cart_ids: return redirect('/')
+    total = sum(get_product(pid)['price'] for pid in cart_ids)
+    return render_template_string(HTML_TEMPLATE, page='payment', total=total, upi_id=MY_UPI_ID, upi_name=MY_NAME)
+
+@app.route('/success', methods=['POST'])
+def success():
+    cart_ids = session.get('cart', [])
+    orders = session.get('orders', [])
+    date = (datetime.datetime.now() + datetime.timedelta(days=5)).strftime("%d %b")
+    for pid in cart_ids:
+        p = get_product(pid)
+        orders.append({'item': p['name'], 'amount': p['price'], 'date': date})
+    session['orders'] = orders
+    session['cart'] = [] 
+    return render_template_string(HTML_TEMPLATE, page='success', date=date)
+
+@app.route('/my_orders')
+def my_orders():
+    orders = session.get('orders', [])
+    return render_template_string(HTML_TEMPLATE, page='my_orders', orders=orders)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
